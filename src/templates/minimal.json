@@ -1,0 +1,10 @@
+{
+  "id": "minimal",
+  "name": "Minimal",
+  "bg": "#1e1b54",
+  "pattern": "dots",
+  "accent": "#ffffff",
+  "subText": "rgba(255,255,255,0.6)",
+  "pill": "rgba(255,255,255,0.10)",
+  "pillText": "rgba(255,255,255,0.88)"
+}

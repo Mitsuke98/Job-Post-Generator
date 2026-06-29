@@ -1,0 +1,10 @@
+{
+  "id": "gradient",
+  "name": "Gradient",
+  "bg": "#0f0d33",
+  "pattern": "gradient",
+  "accent": "#ffffff",
+  "subText": "rgba(255,255,255,0.6)",
+  "pill": "rgba(255,255,255,0.10)",
+  "pillText": "rgba(255,255,255,0.88)"
+}
