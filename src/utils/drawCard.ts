@@ -9,8 +9,8 @@ export async function drawCard(
   whiteLogo: HTMLImageElement | null,
   layout: LayoutType = 'centered',
 ) {
-  if (layout === 'split') return drawSplitLayout(canvas, data, whiteLogo);
-  if (layout === 'bold')  return drawBoldLayout(canvas, data, whiteLogo);
+  if (layout === 'split') return drawSplitLayout(canvas, data, template, whiteLogo);
+  if (layout === 'bold')  return drawBoldLayout(canvas, data, template, whiteLogo);
   return drawCenteredLayout(canvas, data, template, whiteLogo);
 }
 
@@ -32,21 +32,7 @@ async function drawCenteredLayout(
 
   // Background
   if (template.type === 'image' && template.imagePath) {
-    await new Promise<void>((resolve) => {
-      const bgImg = new Image();
-      bgImg.onload = () => {
-        const scale = Math.max(W / bgImg.width, H / bgImg.height);
-        const sw = bgImg.width * scale;
-        const sh = bgImg.height * scale;
-        const sx = (W - sw) / 2;
-        const sy = (H - sh) / 2;
-        ctx.drawImage(bgImg, sx, sy, sw, sh);
-        ctx.fillStyle = 'rgba(30, 27, 84, 0.55)';
-        ctx.fillRect(0, 0, W, H);
-        resolve();
-      };
-      bgImg.src = template.imagePath!;
-    });
+    await drawImageBackground(ctx, W, H, template.imagePath);
   } else {
     if (template.pattern === 'gradient') {
       const grad = ctx.createRadialGradient(540, 460, 0, 540, 460, 700);
@@ -180,6 +166,7 @@ async function drawCenteredLayout(
 async function drawSplitLayout(
   canvas: HTMLCanvasElement,
   data: JobFormData,
+  template: Template,
   whiteLogo: HTMLImageElement | null,
 ) {
   const W = 1080;
@@ -191,22 +178,26 @@ async function drawSplitLayout(
 
   await document.fonts.ready;
 
-  // Left panel background
-  ctx.fillStyle = '#1e1b54';
-  ctx.fillRect(0, 0, SPLIT, H);
-  // Dot pattern on left panel
-  ctx.fillStyle = 'rgba(255,255,255,0.07)';
-  for (let x = 18; x < SPLIT; x += 36) {
-    for (let y = 18; y < H; y += 36) {
-      ctx.beginPath();
-      ctx.arc(x, y, 1.8, 0, Math.PI * 2);
-      ctx.fill();
+  if (template.type === 'image' && template.imagePath) {
+    await drawImageBackground(ctx, W, H, template.imagePath, 0.6);
+  } else {
+    // Left panel background
+    ctx.fillStyle = '#1e1b54';
+    ctx.fillRect(0, 0, SPLIT, H);
+    // Dot pattern on left panel
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    for (let x = 18; x < SPLIT; x += 36) {
+      for (let y = 18; y < H; y += 36) {
+        ctx.beginPath();
+        ctx.arc(x, y, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
-  }
 
-  // Right panel background
-  ctx.fillStyle = '#16144a';
-  ctx.fillRect(SPLIT, 0, W - SPLIT, H);
+    // Right panel background
+    ctx.fillStyle = '#16144a';
+    ctx.fillRect(SPLIT, 0, W - SPLIT, H);
+  }
 
   // Vertical divider
   ctx.strokeStyle = 'rgba(255,255,255,0.1)';
@@ -350,6 +341,7 @@ async function drawSplitLayout(
 async function drawBoldLayout(
   canvas: HTMLCanvasElement,
   data: JobFormData,
+  template: Template,
   whiteLogo: HTMLImageElement | null,
 ) {
   const W = 1080;
@@ -360,18 +352,22 @@ async function drawBoldLayout(
 
   await document.fonts.ready;
 
-  // Background
-  ctx.fillStyle = '#1e1b54';
-  ctx.fillRect(0, 0, W, H);
+  if (template.type === 'image' && template.imagePath) {
+    await drawImageBackground(ctx, W, H, template.imagePath);
+  } else {
+    // Background
+    ctx.fillStyle = '#1e1b54';
+    ctx.fillRect(0, 0, W, H);
 
-  // Diagonal lines (45°, 40px spacing)
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-  ctx.lineWidth = 1;
-  for (let i = -H; i < W + H; i += 40) {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i + H, H);
-    ctx.stroke();
+    // Diagonal lines (45°, 40px spacing)
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let i = -H; i < W + H; i += 40) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i + H, H);
+      ctx.stroke();
+    }
   }
 
   // Ghost "01" number (right edge, partially clipped)
@@ -519,6 +515,30 @@ async function drawBoldLayout(
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+function drawImageBackground(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  imagePath: string,
+  overlayAlpha = 0.55,
+): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const bgImg = new Image();
+    bgImg.onload = () => {
+      const scale = Math.max(W / bgImg.width, H / bgImg.height);
+      const sw = bgImg.width * scale;
+      const sh = bgImg.height * scale;
+      const sx = (W - sw) / 2;
+      const sy = (H - sh) / 2;
+      ctx.drawImage(bgImg, sx, sy, sw, sh);
+      ctx.fillStyle = `rgba(30, 27, 84, ${overlayAlpha})`;
+      ctx.fillRect(0, 0, W, H);
+      resolve();
+    };
+    bgImg.src = imagePath;
+  });
+}
 
 function buildPillItems(data: JobFormData) {
   return [
